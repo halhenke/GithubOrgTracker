@@ -40,6 +40,7 @@ library
     --     NoImplicitPrelude
     build-depends:
         base,
+        bytestring,
         relude,
         persistent,
         persistent-sqlite,
@@ -49,6 +50,7 @@ library
         morpheus-graphql,
         template-haskell,
         file-embed,
+        req,
         selda,
         selda-sqlite
     hs-source-dirs:   src
