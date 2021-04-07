@@ -8,6 +8,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE EmptyDataDeriving #-}
 {-# LANGUAGE TypeApplications #-}
 
 
@@ -130,64 +131,7 @@ defineByDocumentFile'
     |]
 
 
--- queryGithub = do
---   q <-
---     -- (defineByDocumentFile'
---     --   (makeRelativeToProject "src/GraphQL/schema.gql")
---     --   [gql|
---     --         query GetRepo($org: String!){
---     --             rateLimit {
---     --                 cost
---     --                 remaining
---     --                 resetAt
---     --             }
---     --             organization(login: "$org") {
---     --                 repositories(orderBy: {field: PUSHED_AT, direction: DESC}, first: 100) {
---     --                 edges {
---     --                     node {
---     --                         name,
---     --                         description,
---     --                         descriptionHTML,
---     --                         shortDescriptionHTML,
---     --                         stargazers(first: 1) {
---     --                             totalCount
---     --                         }
---     --                         createdAt,
---     --                         pushedAt,
---     --                         updatedAt,
---     --                         primaryLanguage {
---     --                             name
---     --                         }
---     --                         languages(first: 10) {
---     --                             edges {
---     --                                 node {
---     --                                     name
---     --                                 }
---     --                             }
---     --                         }
---     --                         repositoryTopics(first: 10) {
---     --                             edges {
---     --                             node {
---     --                                 topic {
---     --                                 name
---     --                                 }
---     --                             }
---     --                         }
---     --                     }
---     --                     }
---     --                 }
---     --                 }
---     --             }
---     --         }
---     --     |]
---     -- )
---   print "q"
--- --   qa <- runQ q
---   qa <- fetch $ resolver "fake"
--- --   print @Text $ _ q
---   print "Apple"
 
--- fetchHero :: Args GetRepo -> IO (Either String GetRepo)
 fetchHero :: IO (Either String GetRepo)
 fetchHero = fetch jsonRes $ args
  where
