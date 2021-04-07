@@ -39,30 +39,44 @@ import           Network.HTTP.Req
 --         }
 --     |]
 
-data HTML = HTML Text
-    deriving (Typeable, DecodeScalar, EncodeScalar, Eq, Show)
-data DateTime = DateTime Text
-    deriving (Typeable, DecodeScalar, EncodeScalar, Eq, Show)
+newtype HTML = HTML Text
+    deriving (Typeable, Eq, Show)
+    -- deriving (Typeable, DecodeScalar, EncodeScalar, Eq, Show)
+newtype DateTime = DateTime Text
+    deriving (Typeable, Eq, Show)
+    -- deriving (Typeable, DecodeScalar, EncodeScalar, Eq, Show)
 
+instance EncodeScalar HTML where
+  encodeScalar (HTML a) = String a
 
+instance DecodeScalar HTML where
+  decodeScalar (String t) = Right (HTML t)
+  decodeScalar _          = Left "HTML parse failed"
 -- githubApi :: ByteString -> IO ByteString
 -- githubApi req = do
 --   print req
 --   return "bad"
 
-ghAPI = "https://api.github.com/graphql"
+instance EncodeScalar DateTime where
+  encodeScalar (DateTime t) = String t
+
+instance DecodeScalar DateTime where
+  decodeScalar (String t) = Right (DateTime t)
+  decodeScalar _          = Left "DateTime parse failed"
+
+
+ghAPI = https "api.github.com" /: "graphql"
 ghToken = "***REMOVED***"
 
 resolver :: String -> ByteString -> IO ByteString
 resolver tok b = runReq defaultHttpConfig $ do
   let headers =
-        header "Accept" "application/json"
+        header "Content-Type" "application/json"
           <> header "User-Agent" "halhenke"
           <> oAuth2Token ghToken
         --   <> header "Authorization"
         --             "Bearer ***REMOVED***"
-  (responseBody <$> req POST (https ghAPI) (ReqBodyLbs b) lbsResponse headers)
-  (responseBody <$> req GET (https ghAPI) (ReqBodyLbs b) lbsResponse headers)
+  (responseBody <$> req POST ghAPI (ReqBodyLbs b) lbsResponse headers)
 
 
 
@@ -178,7 +192,7 @@ fetchHero :: IO (Either String GetRepo)
 fetchHero = fetch jsonRes $ args
  where
   args :: GetRepoArgs
-  args = GetRepoArgs { org = "Zeus" }
+  args = GetRepoArgs { org = "google" }
   jsonRes :: ByteString -> IO ByteString
   jsonRes = return
 
@@ -202,5 +216,10 @@ fetchRepo = fetch (resolver "fake") args
 
 runRepo :: IO ()
 runRepo = do
-  (Right repo) <- fetchRepo
-  print repo
+--   (Right repo) <- fetchRepo
+  result <- fetchRepo
+  case result of
+    (Left  err ) -> print err
+    (Right repo) -> print repo
+--   print repo
+  return ()
