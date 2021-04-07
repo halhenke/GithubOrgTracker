@@ -38947,8 +38947,8 @@ A valid x509 certificate string
 scalar X509Certificate
 
 type RLimit {
-    cost: String!
-    remaining: String!
+    cost: Int!
+    remaining: Int!
     resetAt: String!
 }
 
