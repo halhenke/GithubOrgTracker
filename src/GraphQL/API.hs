@@ -11,6 +11,11 @@
 {-# LANGUAGE EmptyDataDeriving #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE OverloadedLabels #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE Strict #-}
 
 
 module GraphQL.API
@@ -28,8 +33,13 @@ import           Data.ByteString.Lazy           ( ByteString )
 import qualified Data.ByteString.Char8         as C8
 import           Network.HTTP.Req
 
-import           Lens.Micro                    as LM
-import           Lens.Micro.TH                 as LMTH
+-- import           Lens.Micro                    as LM
+-- import           Lens.Micro.TH                 as LMTH
+import           Control.Lens                  as LM
+import           Control.Lens.TH               as LMTH
+-- import           GHC.Records                    ( HasField(..) ) -- Since base 4.10.0.0
+-- import           GHC.OverloadedLabels           ( IsLabel(..) )
+
 -- defineByDocumentFile "./src/GraphQL/github.gql"
 --     [gql|
 --         query GetHero ($character: Character)
@@ -186,10 +196,18 @@ decodeResponse (GetRepo _ _         ) = Left "Something went wrong"
 parseRepo :: OrganizationRepositoriesEdgesNodeRepository -> Text
 parseRepo o = o ^. _name
 
+-- instance IsLabel "name" (OrganizationRepositoriesEdgesNodeRepository -> Text) where
+--   fromLabel = name @OrganizationRepositoriesEdgesNodeRepository
+--     OrganizationRepositoriesEdgesNodeRepository
+
+-- instance HasField "name" OrganizationRepositoriesEdgesNodeRepository a => IsLabel "name" (OrganizationRepositoriesEdgesNodeRepository -> a) where
+--   fromLabel = getField
+
 -- parse :: OrganizationOrganization -> [OrganizationRepositoriesEdgesRepositoryEdge]
 -- parse :: OrganizationOrganization -> [OrganizationRepositoriesEdgesNodeRepository]
-parse :: OrganizationOrganization -> [Text]
-parse oo = cc -- & b
+-- parse :: OrganizationOrganization -> [Text]
+parse :: OrganizationOrganization -> [(Text, Text, Text, Int)]
+parse oo = mapper cc -- & b
  where
   -- cc :: _ccc
   cc =
@@ -197,12 +215,19 @@ parse oo = cc -- & b
       ^. _repositories
       ^. _edges
       &  (^?! _Just)
-      &  (^.. each
-           . _Just
-           . _node
-           . _Just
-           . (_name <> (_updatedAt . (to getDateTime)))
-         )
+      &  ((^.. each . _Just . _node . _Just
+            -- . (_name <> (_updatedAt . (to getDateTime)))
+                                           )
+          --  (<| [])
+                                            )
+  mapper = map
+    (\x ->
+      ( x ^. _name
+      , (getDateTime . updatedAt) x
+      , (getDateTime . createdAt) x
+      , (totalCount . stargazers) x
+      )
+    )
   -- a  = _aaa b
   -- b = (^. _node) d
   -- b  = (^.. each . _node) & d
