@@ -10,12 +10,13 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE EmptyDataDeriving #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE ViewPatterns #-}
 
 
 module GraphQL.API
-  ( runRepo
-  )
-where
+  -- ( runRepo
+  -- )
+                   where
 
 import           Data.Morpheus.Client          as DMC
 import           Data.FileEmbed
@@ -26,6 +27,9 @@ import           Language.Haskell.TH
 import           Data.ByteString.Lazy           ( ByteString )
 import qualified Data.ByteString.Char8         as C8
 import           Network.HTTP.Req
+
+import           Lens.Micro                    as LM
+import           Lens.Micro.TH                 as LMTH
 -- defineByDocumentFile "./src/GraphQL/github.gql"
 --     [gql|
 --         query GetHero ($character: Character)
@@ -40,10 +44,10 @@ import           Network.HTTP.Req
 --         }
 --     |]
 
-newtype HTML = HTML Text
+newtype HTML = HTML {getHTML :: Text}
     deriving (Typeable, Eq, Show)
     -- deriving (Typeable, DecodeScalar, EncodeScalar, Eq, Show)
-newtype DateTime = DateTime Text
+newtype DateTime = DateTime {getDateTime :: Text}
     deriving (Typeable, Eq, Show)
     -- deriving (Typeable, DecodeScalar, EncodeScalar, Eq, Show)
 
@@ -130,7 +134,11 @@ defineByDocumentFile'
         }
     |]
 
-
+makeLensesFor [("repositories", "_repositories")] ''OrganizationOrganization
+makeLensesFor [("edges", "_edges")] ''OrganizationRepositoriesRepositoryConnection
+makeLensesFor [("node", "_node")] ''OrganizationRepositoriesEdgesRepositoryEdge
+makeLensesFor [("name", "_name"), ("description", "_description"), ("stargazers", "_stargazers"), ("primaryLanguage", "_primaryLanguage"), ("createdAt", "_createdAt"), ("pushedAt", "_pushedAt"), ("updatedAt", "_updatedAt"), ("languages", "_languages"), ("repositoryTopics", "_repositoryTopics")] ''OrganizationRepositoriesEdgesNodeRepository
+makeLensesFor [("totalCount", "_totalCount")] ''OrganizationRepositoriesEdgesNodeStargazersStargazerConnection
 
 fetchHero :: IO (Either String GetRepo)
 fetchHero = fetch jsonRes $ args
@@ -163,7 +171,45 @@ runRepo = do
 --   (Right repo) <- fetchRepo
   result <- fetchRepo
   case result of
-    (Left  err ) -> print err
-    (Right repo) -> print repo
+    (Left err) -> print err
+    -- (Right repo) -> print (decodeResponse repo)
+    (Right (decodeResponse -> Right org)) -> print (parse org)
+    otherwise -> print "Seems like some deep Parsing Failed"
 --   print repo
   return ()
+
+
+-- decodeResponse :: GetRepo -> Either Text OrganizationOrganization
+decodeResponse (GetRepo _ (Just org)) = Right org
+decodeResponse (GetRepo _ _         ) = Left "Something went wrong"
+
+parseRepo :: OrganizationRepositoriesEdgesNodeRepository -> Text
+parseRepo o = o ^. _name
+
+-- parse :: OrganizationOrganization -> [OrganizationRepositoriesEdgesRepositoryEdge]
+-- parse :: OrganizationOrganization -> [OrganizationRepositoriesEdgesNodeRepository]
+parse :: OrganizationOrganization -> [Text]
+parse oo = cc -- & b
+ where
+  -- cc :: _ccc
+  cc =
+    oo
+      ^. _repositories
+      ^. _edges
+      &  (^?! _Just)
+      &  (^.. each
+           . _Just
+           . _node
+           . _Just
+           . (_name <> (_updatedAt . (to getDateTime)))
+         )
+  -- a  = _aaa b
+  -- b = (^. _node) d
+  -- b  = (^.. each . _node) & d
+  -- d  = (^.. each . _Just) -- & e
+  -- d = (^?! _Just) (^. _name)
+  -- e  = (^.. each . _name)
+
+  -- b  = (^.. _name)
+-- ^. _1 ^
+-- parseOrg :: OrganizationOrganization ->
