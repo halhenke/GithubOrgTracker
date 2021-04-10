@@ -43,7 +43,8 @@ import           Control.Lens.TH               as LMTH
 import           GraphQL.HelperTH              as GQL
 import           GraphQL.Query                 as GQL
 -- import           GHC.IsLabel
-import           DB.SeldaRepo                   ( RepoQuery(..) )
+import           DB.SeldaRepo                  as DBS
+                                                ( RepoQuery(..) )
 import           GHC.Records
 
 data Result = Result {
@@ -116,6 +117,10 @@ decodeResponse (GetRepo _ _         ) = Left "Something went wrong"
 -- parseRepo :: OrganizationRepositoriesEdgesNodeRepository -> Text
 -- parseRepo o = o ^. _name
 
+cheapDateReader :: Text -> UTCTime
+cheapDateReader dt = fromMaybe defaultDate (iso8601ParseM (toString dt))
+  where defaultDate = UTCTime (toEnum 3) (fromInteger 4)
+
 instance HasField x r a => IsLabel x (r -> a) where
   fromLabel = getField @x
 
@@ -132,11 +137,9 @@ instance HasField x r a => IsLabel x (r -> a) where
 -- parse :: OrganizationOrganization -> [(Text, Text, Text, Int)]
 parse :: Text -> OrganizationOrganization -> [RepoQuery]
 -- parse :: Text -> OrganizationOrganization -> [Result]
-parse orgName oo = mapper cc -- & b
 -- parse :: OrganizationOrganization -> [Result]
 -- parse oo = mapper cc -- & b
-
-
+parse orgName oo = mapper cc
  where
   cc =
     oo
@@ -155,16 +158,34 @@ parse orgName oo = mapper cc -- & b
                                 --  (name x)
                        repoQueryName = x ^. _name
                      , orgRef2       = orgName
-                     , created       = UTCTime (toEnum 4) (fromInteger 4)
-                     , updated       = UTCTime (toEnum 3) (fromInteger 4)
-      -- , created       = (iso8601ParseM . show . getDateTime . createdAt) x
+                    --  , created       = UTCTime (toEnum 4) (fromInteger 4)
+                     , created = (cheapDateReader . getDateTime . createdAt) x
+                     , updated = (cheapDateReader . getDateTime . updatedAt) x
       -- , updated       = (getDateTime . updatedAt) x
                      , lastRun       = UTCTime (toEnum 3) (fromInteger 4)
                      , stars         = (#totalCount . stargazers) x
-                     , language      = "[]"
-                    --  , _topics       = []
+                     , languages     = fromMaybe "" (langParser x)
+                     , topics        = "[]"
                      }
     )
+  langParser = \x -> do
+    y  <- GQL.languages x
+    yy <- #edges y
+    let yyy = catMaybes yy
+    let y4  = #name . #node <$> yyy
+    let y5 = toText $ intercalate ", " (toString <$> y4)
+    return y5
+    -- yy :: [Maybe OrganizationRepositoriesEdgesNodeLanguagesEdgesLanguageEdge] <-
+    -- yy <-
+    --   getField @"node"
+    --     @OrganizationRepositoriesEdgesNodeLanguagesLanguageConnection
+    --     y
+    -- let yyy = catMaybes yy
+    -- return "april"
+    -- yyy  <- #edges yy
+    -- yyyy <- #node yyy
+    -- yyyy
+  -- langer = (to (fromMaybe @Text "None"))
   -- mapper = map
   --   (\x -> Result {
   --       -- NOTE: This is how you disambiguate a Record Field Witlh OverloadedLabels

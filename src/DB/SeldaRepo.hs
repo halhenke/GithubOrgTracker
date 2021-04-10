@@ -24,7 +24,8 @@ data RepoQuery = RepoQuery {
     repoQueryName :: Text,
     orgRef2 :: Text,
     stars :: Int,
-    language :: Text,
+    languages :: Text,
+    topics :: Text,
     created :: UTCTime,
     updated :: UTCTime,
     lastRun :: UTCTime
