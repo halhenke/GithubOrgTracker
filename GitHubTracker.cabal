@@ -64,6 +64,9 @@ library
     default-extensions:
         NoImplicitPrelude
         OverloadedStrings
+    mixins: base hiding (Prelude)
+            , relude (Relude as Prelude)
+            , relude
 
 executable GitHubTracker
     main-is:          Main.hs
