@@ -74,7 +74,11 @@ executable GitHubTracker
     -- other-extensions:
     build-depends:
         base,
+        relude,
         GitHubTracker
 
     hs-source-dirs:   app
     default-language: Haskell2010
+    default-extensions:
+        NoImplicitPrelude
+        OverloadedStrings

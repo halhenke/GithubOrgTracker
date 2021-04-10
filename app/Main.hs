@@ -1,5 +1,6 @@
 module Main where
 
+import           Relude
 -- import qualified MyLib                          ( someFunc )
 import           MyLib                         as GHT
 
