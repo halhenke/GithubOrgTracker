@@ -7,7 +7,7 @@ import           MyLib                         as GHT
 main :: IO ()
 main = do
   -- GHT.mkDB
-  GHT.runRepo
+  GHT.runRepo "Google"
 -- main = do
 --   putStrLn "Hello, Haskell!"
 --   MyLib.someFunc

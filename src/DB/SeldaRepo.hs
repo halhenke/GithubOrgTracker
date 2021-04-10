@@ -24,11 +24,11 @@ data RepoQuery = RepoQuery {
     repoQueryName :: Text,
     orgRef2 :: Text,
     stars :: Int,
-    langugage :: Text,
+    language :: Text,
     created :: UTCTime,
     updated :: UTCTime,
     lastRun :: UTCTime
-} deriving Generic
+} deriving (Generic, Show, Eq)
 instance SqlRow RepoQuery
 
 org :: Table Org

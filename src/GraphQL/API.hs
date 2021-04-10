@@ -27,6 +27,8 @@ module GraphQL.API
 import           Data.Morpheus.Client          as DMC
 -- import           Relude
 import           Relude                  hiding ( ByteString )
+import           Data.Time.Clock
+import           Data.Time.Format.ISO8601
 import           Language.Haskell.TH
 import           Data.ByteString.Lazy           ( ByteString )
 import qualified Data.ByteString.Char8         as C8
@@ -41,6 +43,7 @@ import           Control.Lens.TH               as LMTH
 import           GraphQL.HelperTH              as GQL
 import           GraphQL.Query                 as GQL
 -- import           GHC.IsLabel
+import           DB.SeldaRepo                   ( RepoQuery(..) )
 import           GHC.Records
 
 data Result = Result {
@@ -66,31 +69,52 @@ resolver tok b = runReq defaultHttpConfig $ do
   (responseBody <$> req POST ghAPI (ReqBodyLbs b) lbsResponse headers)
 
 
+fetchRepo :: Text -> IO (Either String GetRepo)
+fetchRepo orgName = fetch (resolver "fake") args
+  where args = GetRepoArgs { org = (toString orgName) }
 
-fetchRepo :: IO (Either String GetRepo)
-fetchRepo = fetch (resolver "fake") args
-  where args = GetRepoArgs { org = "Google" }
-
-
-runRepo :: IO ()
-runRepo = do
+runRepo :: Text -> IO ()
+runRepo orgName = do
 --   (Right repo) <- fetchRepo
-  result <- fetchRepo
+  result <- fetchRepo orgName
+  -- print result
+  -- print $ "we just ran this for " <> orgName
   case result of
     (Left err) -> print err
     -- (Right repo) -> print (decodeResponse repo)
-    (Right (decodeResponse -> Right org)) -> print (parse org)
+    (Right (decodeResponse -> Right org)) -> print (parse orgName org)
     otherwise -> print "Seems like some deep Parsing Failed"
 --   print repo
   return ()
 
 
+-- fetchRepo :: IO (Either String GetRepo)
+-- fetchRepo = fetch (resolver "fake") args
+--   where args = GetRepoArgs { org = "Google" }
+
+
+-- runRepo :: IO ()
+-- runRepo = do
+-- --   (Right repo) <- fetchRepo
+--   let repo = "Microsoft"
+--   result <- fetchRepo repo
+--   print (toString repo)
+--   case result of
+--     (Left err) -> print err
+--     -- (Right repo) -> print (decodeResponse repo)
+--     (Right (decodeResponse -> Right org)) -> print (parse "Google" org)
+--     otherwise -> print "Seems like some deep Parsing Failed"
+-- --   print repo
+--   return ()
+
+
 -- decodeResponse :: GetRepo -> Either Text OrganizationOrganization
+decodeResponse :: IsString a => GetRepo -> Either a OrganizationOrganization
 decodeResponse (GetRepo _ (Just org)) = Right org
 decodeResponse (GetRepo _ _         ) = Left "Something went wrong"
 
-parseRepo :: OrganizationRepositoriesEdgesNodeRepository -> Text
-parseRepo o = o ^. _name
+-- parseRepo :: OrganizationRepositoriesEdgesNodeRepository -> Text
+-- parseRepo o = o ^. _name
 
 instance HasField x r a => IsLabel x (r -> a) where
   fromLabel = getField @x
@@ -106,7 +130,13 @@ instance HasField x r a => IsLabel x (r -> a) where
 -- parse :: OrganizationOrganization -> [OrganizationRepositoriesEdgesNodeRepository]
 -- parse :: OrganizationOrganization -> [Text]
 -- parse :: OrganizationOrganization -> [(Text, Text, Text, Int)]
-parse oo = mapper cc -- & b
+parse :: Text -> OrganizationOrganization -> [RepoQuery]
+-- parse :: Text -> OrganizationOrganization -> [Result]
+parse orgName oo = mapper cc -- & b
+-- parse :: OrganizationOrganization -> [Result]
+-- parse oo = mapper cc -- & b
+
+
  where
   cc =
     oo
@@ -119,18 +149,35 @@ parse oo = mapper cc -- & b
           --  (<| [])
                                             )
   mapper = map
-    (\x -> Result {
+    (\x -> RepoQuery {
         -- NOTE: This is how you disambiguate a Record Field Witlh OverloadedLabels
         -- (getField @"name" @OrganizationRepositoriesEdgesNodeRepository) x
                                 --  (name x)
-                    _repoName  = x ^. _name
-                  , _updatedAt = (getDateTime . updatedAt) x
-                  , _createdAt = (getDateTime . createdAt) x
-                  , _stars     = (#totalCount . stargazers) x
-                  , _languages = []
-                  , _topics    = []
-                  }
+                       repoQueryName = x ^. _name
+                     , orgRef2       = orgName
+                     , created       = UTCTime (toEnum 4) (fromInteger 4)
+                     , updated       = UTCTime (toEnum 3) (fromInteger 4)
+      -- , created       = (iso8601ParseM . show . getDateTime . createdAt) x
+      -- , updated       = (getDateTime . updatedAt) x
+                     , lastRun       = UTCTime (toEnum 3) (fromInteger 4)
+                     , stars         = (#totalCount . stargazers) x
+                     , language      = "[]"
+                    --  , _topics       = []
+                     }
     )
+  -- mapper = map
+  --   (\x -> Result {
+  --       -- NOTE: This is how you disambiguate a Record Field Witlh OverloadedLabels
+  --       -- (getField @"name" @OrganizationRepositoriesEdgesNodeRepository) x
+  --                               --  (name x)
+  --                   _repoName  = x ^. _name
+  --                 , _updatedAt = (getDateTime . updatedAt) x
+  --                 , _createdAt = (getDateTime . createdAt) x
+  --                 , _stars     = (#totalCount . stargazers) x
+  --                 , _languages = []
+  --                 , _topics    = []
+  --                 }
+  --   )
   -- mapper = map
   --   (\x ->
   --     ( x ^. _name

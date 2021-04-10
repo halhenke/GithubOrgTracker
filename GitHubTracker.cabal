@@ -54,6 +54,7 @@ library
         morpheus-graphql-core,
         morpheus-graphql,
         template-haskell,
+        time,
         file-embed,
         req,
         selda,
