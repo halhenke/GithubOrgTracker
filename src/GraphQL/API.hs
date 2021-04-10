@@ -14,6 +14,7 @@
 {-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE Strict #-}
 
@@ -24,10 +25,8 @@ module GraphQL.API
                    where
 
 import           Data.Morpheus.Client          as DMC
-import           Data.FileEmbed
 -- import           Relude
 import           Relude                  hiding ( ByteString )
-import           GraphQL.HelperTH
 import           Language.Haskell.TH
 import           Data.ByteString.Lazy           ( ByteString )
 import qualified Data.ByteString.Char8         as C8
@@ -39,46 +38,19 @@ import           Control.Lens                  as LM
 import           Control.Lens.TH               as LMTH
 -- import           GHC.Records                    ( HasField(..) ) -- Since base 4.10.0.0
 -- import           GHC.OverloadedLabels           ( IsLabel(..) )
+import           GraphQL.HelperTH              as GQL
+import           GraphQL.Query                 as GQL
+-- import           GHC.IsLabel
+import           GHC.Records
 
--- defineByDocumentFile "./src/GraphQL/github.gql"
---     [gql|
---         query GetHero ($character: Character)
---         {
---             deity (fatherOf:$character) {
---             name
---             power
---             worships {
---                 deity2Name: name
---             }
---             }
---         }
---     |]
-
-newtype HTML = HTML {getHTML :: Text}
-    deriving (Typeable, Eq, Show)
-    -- deriving (Typeable, DecodeScalar, EncodeScalar, Eq, Show)
-newtype DateTime = DateTime {getDateTime :: Text}
-    deriving (Typeable, Eq, Show)
-    -- deriving (Typeable, DecodeScalar, EncodeScalar, Eq, Show)
-
-instance EncodeScalar HTML where
-  encodeScalar (HTML a) = String a
-
-instance DecodeScalar HTML where
-  decodeScalar (String t) = Right (HTML t)
-  decodeScalar _          = Left "HTML parse failed"
--- githubApi :: ByteString -> IO ByteString
--- githubApi req = do
---   print req
---   return "bad"
-
-instance EncodeScalar DateTime where
-  encodeScalar (DateTime t) = String t
-
-instance DecodeScalar DateTime where
-  decodeScalar (String t) = Right (DateTime t)
-  decodeScalar _          = Left "DateTime parse failed"
-
+data Result = Result {
+  _repoName :: Text,
+  _createdAt ::Text,
+  _updatedAt :: Text,
+  _stars :: Int,
+  _languages :: [Text],
+  _topics :: [Text]
+} deriving (Show, Eq)
 
 ghAPI = https "api.github.com" /: "graphql"
 ghToken = "***REMOVED***"
@@ -95,86 +67,10 @@ resolver tok b = runReq defaultHttpConfig $ do
 
 
 
-defineByDocumentFile'
-    (makeRelativeToProject "src/GraphQL/schema.gql")
-    [gql|
-        query GetRepo($org: String!){
-            rateLimit {
-                cost
-                remaining
-                resetAt
-            }
-            organization(login: $org) {
-                repositories(orderBy: {field: PUSHED_AT, direction: DESC}, first: 100) {
-                edges {
-                    node {
-                        name,
-                        description,
-                        descriptionHTML,
-                        shortDescriptionHTML,
-                        stargazers(first: 1) {
-                            totalCount
-                        }
-                        createdAt,
-                        pushedAt,
-                        updatedAt,
-                        primaryLanguage {
-                            name
-                        }
-                        languages(first: 10) {
-                            edges {
-                                node {
-                                    name
-                                }
-                            }
-                        }
-                        repositoryTopics(first: 10) {
-                            edges {
-                            node {
-                                topic {
-                                name
-                                }
-                            }
-                        }
-                    }
-                    }
-                }
-                }
-            }
-        }
-    |]
-
-makeLensesFor [("repositories", "_repositories")] ''OrganizationOrganization
-makeLensesFor [("edges", "_edges")] ''OrganizationRepositoriesRepositoryConnection
-makeLensesFor [("node", "_node")] ''OrganizationRepositoriesEdgesRepositoryEdge
-makeLensesFor [("name", "_name"), ("description", "_description"), ("stargazers", "_stargazers"), ("primaryLanguage", "_primaryLanguage"), ("createdAt", "_createdAt"), ("pushedAt", "_pushedAt"), ("updatedAt", "_updatedAt"), ("languages", "_languages"), ("repositoryTopics", "_repositoryTopics")] ''OrganizationRepositoriesEdgesNodeRepository
-makeLensesFor [("totalCount", "_totalCount")] ''OrganizationRepositoriesEdgesNodeStargazersStargazerConnection
-
-fetchHero :: IO (Either String GetRepo)
-fetchHero = fetch jsonRes $ args
- where
-  args :: GetRepoArgs
-  args = GetRepoArgs { org = "google" }
-  jsonRes :: ByteString -> IO ByteString
-  jsonRes = return
-
 fetchRepo :: IO (Either String GetRepo)
 fetchRepo = fetch (resolver "fake") args
   where args = GetRepoArgs { org = "Google" }
--- defineByDocumentFile'
---     (makeRelativeToProject "src/GraphQL/Mythology.gql")
---     [gql|
---         query GetHero ($character: Character)
---         {
---             deity (fatherOf:$character) {
---             name
---             power
---             worships {
---                 deity2Name: name
---             }
---             }
---         }
---     |]
+
 
 runRepo :: IO ()
 runRepo = do
@@ -196,6 +92,9 @@ decodeResponse (GetRepo _ _         ) = Left "Something went wrong"
 parseRepo :: OrganizationRepositoriesEdgesNodeRepository -> Text
 parseRepo o = o ^. _name
 
+instance HasField x r a => IsLabel x (r -> a) where
+  fromLabel = getField @x
+
 -- instance IsLabel "name" (OrganizationRepositoriesEdgesNodeRepository -> Text) where
 --   fromLabel = name @OrganizationRepositoriesEdgesNodeRepository
 --     OrganizationRepositoriesEdgesNodeRepository
@@ -206,10 +105,9 @@ parseRepo o = o ^. _name
 -- parse :: OrganizationOrganization -> [OrganizationRepositoriesEdgesRepositoryEdge]
 -- parse :: OrganizationOrganization -> [OrganizationRepositoriesEdgesNodeRepository]
 -- parse :: OrganizationOrganization -> [Text]
-parse :: OrganizationOrganization -> [(Text, Text, Text, Int)]
+-- parse :: OrganizationOrganization -> [(Text, Text, Text, Int)]
 parse oo = mapper cc -- & b
  where
-  -- cc :: _ccc
   cc =
     oo
       ^. _repositories
@@ -221,13 +119,26 @@ parse oo = mapper cc -- & b
           --  (<| [])
                                             )
   mapper = map
-    (\x ->
-      ( x ^. _name
-      , (getDateTime . updatedAt) x
-      , (getDateTime . createdAt) x
-      , (totalCount . stargazers) x
-      )
+    (\x -> Result {
+        -- NOTE: This is how you disambiguate a Record Field Witlh OverloadedLabels
+        -- (getField @"name" @OrganizationRepositoriesEdgesNodeRepository) x
+                                --  (name x)
+                    _repoName  = x ^. _name
+                  , _updatedAt = (getDateTime . updatedAt) x
+                  , _createdAt = (getDateTime . createdAt) x
+                  , _stars     = (#totalCount . stargazers) x
+                  , _languages = []
+                  , _topics    = []
+                  }
     )
+  -- mapper = map
+  --   (\x ->
+  --     ( x ^. _name
+  --     , (getDateTime . updatedAt) x
+  --     , (getDateTime . createdAt) x
+  --     , (totalCount . stargazers) x
+  --     )
+  --   )
   -- a  = _aaa b
   -- b = (^. _node) d
   -- b  = (^.. each . _node) & d
