@@ -77,7 +77,7 @@ fetchRepo orgName = fetch (resolver "fake") args
   where args = GetRepoArgs { org = (toString orgName) }
 
 
-runRepo :: Text -> IO (Either String [RepoQuery])
+runRepo :: Text -> IO (Either String (Text, UTCTime, [RepoQuery]))
 runRepo orgName = do
 --   (Right repo) <- fetchRepo
   result <- fetchRepo orgName
@@ -88,7 +88,7 @@ runRepo orgName = do
     (do
       results <- result
       repos   <- decodeResponse results
-      return (parse dt orgName repos)
+      return (orgName, dt, (parse dt orgName repos))
     )
 --   repos  <- case result of
 --     (Left err) -> print err

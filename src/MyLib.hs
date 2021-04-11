@@ -12,6 +12,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE Strict #-}
 
 
@@ -29,6 +30,8 @@ where
 import           Relude
 import           DB.SeldaRepo                  as X
 import           GraphQL.API                   as X
+import           Data.Time.Clock
+import           Database.Selda
 
 
 runOrgs :: [Text] -> IO ()
@@ -36,6 +39,27 @@ runOrgs orgs = do
   results <- mapM runRepo orgs
   print results
   return ()
+
+updateDB :: MonadSelda m => (Text, UTCTime, [RepoQuery]) -> m ()
+-- updateDB []
+-- updateDB rq:rqx
+updateDB (orgName, dt, rqs) = do
+  let o = Org orgName dt
+  insert org [o]
+  return ()
+  -- let org = orgRef2
+
+updateDBRepos :: MonadSelda m => RepoQuery -> m ()
+updateDBRepos rq = do
+  let n     = repoQueryName rq
+      o     = orgRef2 rq
+      lr    = lastRun rq
+      ca    = created rq
+      repo_ = Repo n o lr ca
+  insert repo      [repo_]
+  insert repoQuery [rq]
+  return ()
+
 
 -- -- share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 -- --   User
