@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveGeneric, NoImplicitPrelude, OverloadedStrings, OverloadedLabels #-}
+{-# LANGUAGE Strict #-}
 
 module DB.SeldaRepo where
 

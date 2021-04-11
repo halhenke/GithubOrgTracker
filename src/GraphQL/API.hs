@@ -56,8 +56,10 @@ data Result = Result {
   _topics :: [Text]
 } deriving (Show, Eq)
 
+
 ghAPI = https "api.github.com" /: "graphql"
 ghToken = "***REMOVED***"
+
 
 resolver :: String -> ByteString -> IO ByteString
 resolver tok b = runReq defaultHttpConfig $ do
@@ -74,39 +76,28 @@ fetchRepo :: Text -> IO (Either String GetRepo)
 fetchRepo orgName = fetch (resolver "fake") args
   where args = GetRepoArgs { org = (toString orgName) }
 
-runRepo :: Text -> IO ()
+
+runRepo :: Text -> IO (Either String [RepoQuery])
 runRepo orgName = do
 --   (Right repo) <- fetchRepo
   result <- fetchRepo orgName
+  dt     <- getCurrentTime
   -- print result
   -- print $ "we just ran this for " <> orgName
-  case result of
-    (Left err) -> print err
-    -- (Right repo) -> print (decodeResponse repo)
-    (Right (decodeResponse -> Right org)) -> print (parse orgName org)
-    otherwise -> print "Seems like some deep Parsing Failed"
---   print repo
-  return ()
-
-
--- fetchRepo :: IO (Either String GetRepo)
--- fetchRepo = fetch (resolver "fake") args
---   where args = GetRepoArgs { org = "Google" }
-
-
--- runRepo :: IO ()
--- runRepo = do
--- --   (Right repo) <- fetchRepo
---   let repo = "Microsoft"
---   result <- fetchRepo repo
---   print (toString repo)
---   case result of
+  return
+    (do
+      results <- result
+      repos   <- decodeResponse results
+      return (parse dt orgName repos)
+    )
+--   repos  <- case result of
 --     (Left err) -> print err
 --     -- (Right repo) -> print (decodeResponse repo)
---     (Right (decodeResponse -> Right org)) -> print (parse "Google" org)
+--     (Right (decodeResponse -> Right org)) -> print (parse dt orgName org)
 --     otherwise -> print "Seems like some deep Parsing Failed"
 -- --   print repo
 --   return ()
+
 
 
 -- decodeResponse :: GetRepo -> Either Text OrganizationOrganization
@@ -114,8 +105,6 @@ decodeResponse :: IsString a => GetRepo -> Either a OrganizationOrganization
 decodeResponse (GetRepo _ (Just org)) = Right org
 decodeResponse (GetRepo _ _         ) = Left "Something went wrong"
 
--- parseRepo :: OrganizationRepositoriesEdgesNodeRepository -> Text
--- parseRepo o = o ^. _name
 
 cheapDateReader :: Text -> UTCTime
 cheapDateReader dt = fromMaybe defaultDate (iso8601ParseM (toString dt))
@@ -135,11 +124,11 @@ instance HasField x r a => IsLabel x (r -> a) where
 -- parse :: OrganizationOrganization -> [OrganizationRepositoriesEdgesNodeRepository]
 -- parse :: OrganizationOrganization -> [Text]
 -- parse :: OrganizationOrganization -> [(Text, Text, Text, Int)]
-parse :: Text -> OrganizationOrganization -> [RepoQuery]
+parse :: UTCTime -> Text -> OrganizationOrganization -> [RepoQuery]
 -- parse :: Text -> OrganizationOrganization -> [Result]
 -- parse :: OrganizationOrganization -> [Result]
 -- parse oo = mapper cc -- & b
-parse orgName oo = mapper cc
+parse fetchTime orgName oo = mapper cc
  where
   cc =
     oo
@@ -162,18 +151,25 @@ parse orgName oo = mapper cc
                      , created = (cheapDateReader . getDateTime . createdAt) x
                      , updated = (cheapDateReader . getDateTime . updatedAt) x
       -- , updated       = (getDateTime . updatedAt) x
-                     , lastRun       = UTCTime (toEnum 3) (fromInteger 4)
+                     , lastRun       = fetchTime
                      , stars         = (#totalCount . stargazers) x
                      , languages     = fromMaybe "" (langParser x)
-                     , topics        = "[]"
+                     , topics        = fromMaybe "" (topicParser x)
                      }
     )
   langParser = \x -> do
-    y  <- GQL.languages x
-    yy <- #edges y
-    let yyy = catMaybes yy
+    y <- GQL.languages x
+    y <- #edges y
+    let yyy = catMaybes y
     let y4  = #name . #node <$> yyy
     let y5 = toText $ intercalate ", " (toString <$> y4)
+    return y5
+  topicParser = \x -> do
+    y <- return $ GQL.repositoryTopics x
+    y <- #edges y
+    let yy  = catMaybes y
+    let yyy = #name . #topic <$> (catMaybes $ #node <$> yy)
+    let y5 = toText $ intercalate ", " (toString <$> yyy)
     return y5
     -- yy :: [Maybe OrganizationRepositoriesEdgesNodeLanguagesEdgesLanguageEdge] <-
     -- yy <-

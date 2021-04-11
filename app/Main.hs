@@ -1,3 +1,6 @@
+{-# LANGUAGE Strict #-}
+
+
 module Main where
 
 import           Relude
@@ -7,7 +10,7 @@ import           MyLib                         as GHT
 main :: IO ()
 main = do
   -- GHT.mkDB
-  GHT.runRepo "Google"
+  GHT.runOrgs ["Google"]
 -- main = do
 --   putStrLn "Hello, Haskell!"
 --   MyLib.someFunc

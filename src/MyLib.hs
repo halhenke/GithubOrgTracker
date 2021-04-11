@@ -12,10 +12,12 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE Strict #-}
 
 
 module MyLib
   ( module X
+  , runOrgs
   )
 where
 
@@ -27,6 +29,13 @@ where
 import           Relude
 import           DB.SeldaRepo                  as X
 import           GraphQL.API                   as X
+
+
+runOrgs :: [Text] -> IO ()
+runOrgs orgs = do
+  results <- mapM runRepo orgs
+  print results
+  return ()
 
 -- -- share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 -- --   User
