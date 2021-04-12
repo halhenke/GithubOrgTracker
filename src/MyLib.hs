@@ -7,6 +7,7 @@
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeApplications               #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -32,21 +33,30 @@ import           DB.SeldaRepo                  as X
 import           GraphQL.API                   as X
 import           Data.Time.Clock
 import           Database.Selda
+import           Database.Selda.SQLite
 
 
 runOrgs :: [Text] -> IO ()
 runOrgs orgs = do
   results <- mapM runRepo orgs
-  print results
+  -- out     <- liftIO $ mapM updateDB (rights results)
+  withSQLite github_org_db $ mapM updateDB (rights results)
+  -- print $ (show @Text) (length results) <> " is the length of the results"
+  -- return $ updateDB (results !! 0)
+  -- updateDB (head results)
+  -- bracket
+  -- updateDB results
   return ()
 
-updateDB :: MonadSelda m => (Text, UTCTime, [RepoQuery]) -> m ()
+-- updateDB :: MonadSelda m => (Text, UTCTime, [RepoQuery]) -> m ()
+-- updateDB :: MonadSelda m => Text -> UTCTime -> [RepoQuery]) -> m ()
 -- updateDB []
 -- updateDB rq:rqx
 updateDB (orgName, dt, rqs) = do
   let o = Org orgName dt
   insert org [o]
-  return ()
+  mapM_ updateDBRepos rqs
+  -- return ()
   -- let org = orgRef2
 
 updateDBRepos :: MonadSelda m => RepoQuery -> m ()
