@@ -3,12 +3,14 @@
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedLabels          #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeApplications               #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE DataKinds #-}
@@ -32,7 +34,18 @@ import           Relude
 import           DB.SeldaRepo                  as X
 import           GraphQL.API                   as X
 import           Data.Time.Clock
-import           Database.Selda
+import           Database.Selda                 ( (.==)
+                                                , insert
+                                                , upsert
+                                                , (!)
+                                                , (.&&)
+                                                , literal
+                                                , with
+                                                , Col(..)
+                                                , MonadMask
+                                                , MonadSelda
+                                                , Assignment((:=))
+                                                )
 import           Database.Selda.SQLite
 
 
@@ -54,20 +67,37 @@ runOrgs orgs = do
 -- updateDB rq:rqx
 updateDB (orgName, dt, rqs) = do
   let o = Org orgName dt
-  insert org [o]
+  -- insert org [o]
+  result <- upsert
+    org
+    (\orgArg -> orgArg ! #orgName .== (fromString $ toString orgName))
+    (\orgArg -> with orgArg [#lastRunOrg := (literal dt)])
+    [o]
+  case result of
+    Just id -> print "New Org inserted"
+    Nothing -> print $ "Update performed on Org " <> orgName
   mapM_ updateDBRepos rqs
   -- return ()
   -- let org = orgRef2
 
-updateDBRepos :: MonadSelda m => RepoQuery -> m ()
+updateDBRepos :: (MonadSelda m, MonadMask m) => RepoQuery -> m ()
 updateDBRepos rq = do
   let n     = repoQueryName rq
       o     = orgRef2 rq
       lr    = lastRun rq
       ca    = created rq
       repo_ = Repo n o lr ca
-  insert repo      [repo_]
-  insert repoQuery [rq]
+  -- insert repo [repo_]
+  result <- upsert
+    repo
+    (\r -> (r ! #repoName .== (literal n)) .&& (r ! #orgRef .== (literal o)))
+    (\r -> with r [#lastRunRepo := (literal lr)])
+    [repo_]
+  case result of
+    Just id -> print "New Repo inserted"
+    Nothing -> print $ "Update performed on Repo " <> n
+  num <- insert repoQuery [rq]
+  print $ "Inserted " <> show num <> " times for Repo " <> n
   return ()
 
 
