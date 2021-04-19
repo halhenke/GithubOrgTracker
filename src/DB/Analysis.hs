@@ -19,20 +19,21 @@
 {-# LANGUAGE Strict #-}
 
 
-module MyLib
-  ( module X
+module DB.Analysis
+  ( newReposForOrg
   )
 where
 
-
--- import           Control.Monad.IO.Class         ( liftIO )
--- import           Database.Persist
--- import           Database.Persist.Sqlite
--- import           Database.Persist.TH
 import           Relude
+import           DB.SeldaRepo                  as X
+import           GraphQL.API                   as X
 import           Data.Time.Clock
 import           Database.Selda                 ( (.==)
+                                                -- , (:*:)
+                                                , from
                                                 , insert
+                                                , select
+                                                , query
                                                 , upsert
                                                 , (!)
                                                 , (.&&)
@@ -45,7 +46,11 @@ import           Database.Selda                 ( (.==)
                                                 )
 import           Database.Selda.SQLite
 
-import           DB.SeldaRepo                  as X
-import           GraphQL.API                   as X
-import           DB.UpdateDB                   as X
-import           DB.Analysis                   as X
+newReposForOrg :: Text -> IO ()
+newReposForOrg orgName = do
+--   let q = select repoQuery
+  let q = #repoQueryName `from` select repoQuery
+  withSQLite github_org_db $ do
+    rqn <- query q
+    print rqn
+    return ()

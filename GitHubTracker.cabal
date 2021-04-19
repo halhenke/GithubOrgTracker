@@ -36,6 +36,8 @@ library
         GraphQL.API,
         GraphQL.HelperTH,
         GraphQL.Query
+        DB.UpdateDB
+        DB.Analysis
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
     --     NoImplicitPrelude
