@@ -49,3 +49,5 @@ import           DB.SeldaRepo                  as X
 import           GraphQL.API                   as X
 import           DB.UpdateDB                   as X
 import           DB.Analysis                   as X
+import           CLI.Commander                 as X
+import           CLI.Turtle                    as X
