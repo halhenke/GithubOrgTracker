@@ -36,6 +36,7 @@ import           Database.Selda                 ( (.==)
                                                 , select
                                                 , query
                                                 , upsert
+                                                , descending
                                                 , (!)
                                                 , (.&&)
                                                 , literal
@@ -44,14 +45,31 @@ import           Database.Selda                 ( (.==)
                                                 , MonadMask
                                                 , MonadSelda
                                                 , Assignment((:=))
+                                                , order
                                                 )
 import           Database.Selda.SQLite
 
 newReposForOrg :: Text -> IO ()
 newReposForOrg orgName = do
 --   let q = select repoQuery
-  let q = #repoQueryName `from` select repoQuery
+  -- let q = #repoQueryName `from` select repoQuery
+  let q =
+        (do
+          rq <- select repoQuery
+          order (rq ! #lastRun) descending
+          return (rq ! #repoQueryName)
+        )
   withSQLite github_org_db $ do
     rqn <- query q
     print rqn
     return ()
+
+--
+
+-- aggQ :: (Columns (AggrCols a), Aggregates a) => Query s (AggrCols a)
+-- aggQ = do
+
+-- WITH rows as (SELECT repoQueryName, ROW_NUMBER() OVER (PARTITION BY repoQueryName ORDER BY rq.`lastRun`) AS row FROM repoQuery as rq)
+-- SELECT `repoQueryName`, COUNT(row) as rc
+-- FROM rows as r
+-- GROUP BY r.repoQueryName;
