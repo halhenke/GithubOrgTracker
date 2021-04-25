@@ -51,3 +51,4 @@ import           DB.UpdateDB                   as X
 import           DB.Analysis                   as X
 import           CLI.Commander                 as X
 import           CLI.Turtle                    as X
+import           CLI.Generic                   as X

@@ -11,7 +11,10 @@ main :: IO ()
 main = do
   -- GHT.mkDB
   -- GHT.runOrgs ["Google"]
-  GHT.newReposForOrg "Google"
+  -- GHT.newReposForOrg "Google"
+  -- GHT.commandPrompt
+  GHT.genericPrompt
+  -- GHT.turtlePrompt
 -- main = do
 --   putStrLn "Hello, Haskell!"
 --   MyLib.someFunc

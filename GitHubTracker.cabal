@@ -33,11 +33,11 @@ library
 
     -- Modules included in this library but not exported.
     other-modules:
-        GraphQL.API,
-        GraphQL.HelperTH,
         CLI.Commander
+        CLI.Generic
         CLI.Wizard
         CLI.Turtle
+        Defaults
         GraphQL.API
         GraphQL.HelperTH
         GraphQL.Query
@@ -62,6 +62,7 @@ library
         morpheus-graphql-client,
         morpheus-graphql-core,
         morpheus-graphql,
+        optparse-generic,
         template-haskell,
         time,
         file-embed,

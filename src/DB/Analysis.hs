@@ -27,6 +27,7 @@ where
 import           Relude
 import           DB.SeldaRepo                  as X
 import           GraphQL.API                   as X
+import           Defaults                      as X
 import           Data.Time.Clock
 import           Database.Selda                 ( (.==)
                                                 -- , (:*:)

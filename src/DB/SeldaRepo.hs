@@ -6,6 +6,7 @@ module DB.SeldaRepo where
 import           Database.Selda
 import           Database.Selda.SQLite
 import           Relude
+import           Defaults
 
 data Org = Org {
     orgName :: Text,
