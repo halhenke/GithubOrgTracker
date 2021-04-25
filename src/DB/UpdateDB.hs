@@ -35,6 +35,8 @@ import           DB.SeldaRepo                  as X
 import           GraphQL.API                   as X
 import           Defaults                      as X
 import           Data.Time.Clock
+import           Data.Text                     as DT
+                                                ( toLower )
 import           Database.Selda                 ( (.==)
                                                 , insert
                                                 , upsert
@@ -52,7 +54,8 @@ import           Database.Selda.SQLite
 
 runOrgs :: [Text] -> IO ()
 runOrgs orgs = do
-  results <- mapM runRepo orgs
+  let parsedOrgs = toLower <$> orgs
+  results <- mapM runOrg parsedOrgs
   -- out     <- liftIO $ mapM updateDB (rights results)
   withSQLite github_org_db $ mapM updateDB (rights results)
   -- print $ (show @Text) (length results) <> " is the length of the results"

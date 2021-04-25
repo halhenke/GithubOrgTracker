@@ -51,6 +51,6 @@ github_org_db = "haskell-git-org.sqlite"
 
 mkDB :: IO ()
 mkDB = withSQLite github_org_db $ do
-  createTable org
-  createTable repo
-  createTable repoQuery
+  tryCreateTable org
+  tryCreateTable repo
+  tryCreateTable repoQuery
