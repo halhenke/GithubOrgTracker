@@ -1,3 +1,5 @@
+{-# OPTIONS_HADDOCK ignore-exports #-}
+
 {-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
@@ -51,7 +53,8 @@ import           Database.Selda                 ( (.==)
                                                 )
 import           Database.Selda.SQLite
 
-
+-- | Take a List of 'Org's, query the Github API to get the info on
+-- Repositories, and insert it into the SQLite Database
 runOrgs :: [Text] -> IO ()
 runOrgs orgs = do
   let parsedOrgs = toLower <$> orgs
@@ -69,6 +72,13 @@ runOrgs orgs = do
 -- updateDB :: MonadSelda m => Text -> UTCTime -> [RepoQuery]) -> m ()
 -- updateDB []
 -- updateDB rq:rqx
+
+-- | updateDB takes an 'Org' Name, a 'UTCTime' and a 'RepoQuery' and
+-- it upserts the 'Org' and then maps the 'RepoQuery' over up a
+updateDB
+  :: (MonadMask m, MonadSelda m, Foldable t)
+  => (Text, UTCTime, t RepoQuery)
+  -> m ()
 updateDB (orgName, dt, rqs) = do
   let o = Org orgName dt
   -- insert org [o]
@@ -84,6 +94,8 @@ updateDB (orgName, dt, rqs) = do
   -- return ()
   -- let org = orgRef2
 
+-- | 'updateDBRepos' takes a 'RepoQuery' and upserts a 'Repo' into the SQLite
+-- Database if it does not already exist before inserting the 'RepoQuery'
 updateDBRepos :: (MonadSelda m, MonadMask m) => RepoQuery -> m ()
 updateDBRepos rq = do
   let n     = repoQueryName rq
@@ -97,11 +109,11 @@ updateDBRepos rq = do
     (\r -> (r ! #repoName .== (literal n)) .&& (r ! #orgRef .== (literal o)))
     (\r -> with r [#lastRunRepo := (literal lr)])
     [repo_]
-  case result of
-    Just id -> print "New Repo inserted"
-    Nothing -> print $ "Update performed on Repo " <> n
+  -- case result of
+  --   Just id -> print "New Repo inserted"
+  --   Nothing -> print $ "Update performed on Repo " <> n
   num <- insert repoQuery [rq]
-  print $ "Inserted " <> show num <> " times for Repo " <> n
+  -- print $ "Inserted " <> show num <> " times for Repo " <> n
   return ()
 
 

@@ -8,11 +8,14 @@ import           Database.Selda.SQLite
 import           Relude
 import           Defaults
 
+-- | The Org Data Type is used for Org Rcords
 data Org = Org {
     orgName :: Text,
     lastRunOrg :: UTCTime
 } deriving Generic
 instance SqlRow Org
+
+-- | The Repo Data Type is used for Repo Records
 
 data Repo = Repo {
     repoName :: Text,
@@ -22,6 +25,8 @@ data Repo = Repo {
 } deriving Generic
 instance SqlRow Repo
 
+-- | The RepoQuery Data Type is used to represent the result of Github Queries
+-- about a particular 'Repo'.
 data RepoQuery = RepoQuery {
     repoQueryName :: Text,
     orgRef2 :: Text,
@@ -47,8 +52,9 @@ repoQuery = table
   , #repoQueryName :- foreignKey repo #repoName
   ]
 
-github_org_db = "haskell-git-org.sqlite"
 
+-- | This Creates the 'Org', 'Repo' and 'RepoQuery' Tables if they
+-- dont already exist.
 mkDB :: IO ()
 mkDB = withSQLite github_org_db $ do
   tryCreateTable org

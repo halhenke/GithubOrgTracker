@@ -20,7 +20,7 @@
 
 
 module GraphQL.API
-  -- ( runRepo
+  -- ( runOrg
   -- )
                    where
 
@@ -77,9 +77,10 @@ fetchRepo orgName = fetch (resolver "fake") args
   where args = GetRepoArgs { org = (toString orgName) }
 
 
-runRepo :: Text -> IO (Either String (Text, UTCTime, [RepoQuery]))
-runRepo orgName = do
+runOrg :: Text -> IO (Either String (Text, UTCTime, [RepoQuery]))
+runOrg orgName = do
 --   (Right repo) <- fetchRepo
+  print $ "Fetching Repos for Org " <> orgName <> "..."
   result <- fetchRepo orgName
   dt     <- getCurrentTime
   -- print result
