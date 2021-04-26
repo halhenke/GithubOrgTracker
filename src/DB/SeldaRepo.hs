@@ -10,6 +10,7 @@ import           Database.Selda.Migrations     as DBS
 import           Database.Selda.Backend        as DBS
 import           Database.Selda.Unsafe         as DBU
 import           Database.Selda.Validation     as DBV
+import           Colourista.IO                 as CIO
 import           Relude
 import           Control.Monad.Catch
 import           Defaults
@@ -161,7 +162,7 @@ describeTables tables = mapM_ printTableDescription tables
 
 printTableDescription :: Text -> IO ()
 printTableDescription t = withSQLite github_org_db $ do
-  print $ "Description of Table " <> t
+  liftIO $ infoMessage $ "Description of Table " <> t
   ti <- DBV.describeTable . mkTableName $ t
   print ti
 --   -- print "Horse"
