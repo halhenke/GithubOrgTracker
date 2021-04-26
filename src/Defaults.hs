@@ -47,3 +47,6 @@ defaultOrg = "Google"
 
 github_org_db :: FilePath
 github_org_db = "haskell-git-org.sqlite"
+
+allTableNams :: [Text]
+allTableNams = ["org", "repo", "repoQuery"]

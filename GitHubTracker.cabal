@@ -50,6 +50,7 @@ library
         base,
         bytestring,
         relude,
+        exceptions,
         commander-cli,
         wizards,
         -- microlens,
