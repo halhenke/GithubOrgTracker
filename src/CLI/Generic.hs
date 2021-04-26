@@ -28,6 +28,7 @@ import           Relude                        as R
 import           Options.Generic               as OG
 import           DB.UpdateDB                   as UDB
 import           DB.Analysis                   as A
+import           DB.SeldaRepo                  as DBS
 import           Defaults
 
 -- data Repo = Repo {
@@ -62,14 +63,25 @@ data Command =
     UpdateAll
     | Update [Text]
     | Query Text
+    | MakeTables
+    | Migrate
+    | DestroyAll
+    | Destroy [Text]
+    -- | CheckALLTables
+    | DescribeAllTables
     deriving (Show, Eq, Generic)
 
 instance ParseRecord Command
 
 parseCommand :: Command -> IO ()
-parseCommand (Update repos) = runOrgs repos
-parseCommand UpdateAll      = runOrgs defaultOrgs
-parseCommand (Query repo)   = A.newReposForOrg repo
+parseCommand (Update orgs)     = runOrgs orgs
+parseCommand UpdateAll         = runOrgs defaultOrgs
+parseCommand (Query org)       = A.newReposForOrg org
+parseCommand MakeTables        = DBS.makeTables
+parseCommand Migrate           = DBS.migrateFix
+parseCommand DestroyAll        = DBS.destroyTables allTableNams
+parseCommand (Destroy tables)  = DBS.destroyTables tables
+parseCommand DescribeAllTables = DBS.describeTables allTableNams
 
 genericPrompt :: IO ()
 genericPrompt = do
