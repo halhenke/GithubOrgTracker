@@ -29,24 +29,28 @@ import           DB.SeldaRepo                  as X
 import           GraphQL.API                   as X
 import           Defaults                      as X
 import           Data.Time.Clock
-import           Database.Selda                 ( (.==)
-                                                -- , (:*:)
-                                                , from
-                                                , insert
-                                                , select
-                                                , query
-                                                , upsert
-                                                , descending
-                                                , (!)
-                                                , (.&&)
-                                                , literal
-                                                , with
-                                                , Col(..)
-                                                , MonadMask
-                                                , MonadSelda
-                                                , Assignment((:=))
-                                                , order
-                                                )
+import           Database.Selda
+-- import           Database.Selda                 ( (.==)
+--                                                 -- , (:*:)
+--                                                 , from
+--                                                 , insert
+--                                                 , select
+--                                                 , query
+--                                                 , groupBy
+--                                                 , count
+--                                                 , (:*:)
+--                                                 , upsert
+--                                                 , descending
+--                                                 , (!)
+--                                                 , (.&&)
+--                                                 , literal
+--                                                 , with
+--                                                 , Col(..)
+--                                                 , MonadMask
+--                                                 , MonadSelda
+--                                                 , Assignment((:=))
+--                                                 , order
+--                                                 )
 import           Database.Selda.SQLite
 
 newReposForOrg :: Text -> IO ()
@@ -73,3 +77,29 @@ newReposForOrg orgName = do
 -- SELECT `repoQueryName`, COUNT(row) as rc
 -- FROM rows as r
 -- GROUP BY r.repoQueryName;
+
+-- count_updates
+
+-- repos_per_org
+-- reposPerOrg :: Text -> IO ()
+reposPerOrg = do
+  let q = aggregate $ do
+        r <- select repo
+        g <- groupBy (r ! #orgRef)
+        return (g :*: count (r))
+  withSQLite github_org_db $ do
+    result <- query q
+    print result
+    return ()
+
+-- -- Find the number of people living on every address, for all addresses
+-- -- with more than one tenant:
+-- -- SELECT COUNT(name) AS c, address FROM housing GROUP BY name HAVING c > 1
+
+-- numPpl = do
+--   (num_tenants :*: theAddress) <- aggregate $ do
+--     h <- select housing
+--     theAddress <- groupBy (h ! address)
+--     return (count (h ! address) :*: theAddress)
+--  restrict (num_tenants .> 1)
+--  return (num_tenants :*: theAddress)
