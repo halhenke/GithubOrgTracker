@@ -57,7 +57,7 @@ newReposForOrg orgName = do
         (do
           rq <- select repoQuery
           order (rq ! #lastRun) descending
-          return (rq ! #repoQueryName)
+          return (rq ! #repoName)
         )
   withSQLite github_org_db $ do
     rqn <- query q

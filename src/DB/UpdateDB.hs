@@ -39,6 +39,7 @@ import           Defaults                      as X
 import           Data.Time.Clock
 import           Data.Text                     as DT
                                                 ( toLower )
+import           Colourista.IO                 as CIO
 import           Database.Selda                 ( (.==)
                                                 , insert
                                                 , upsert
@@ -85,11 +86,11 @@ updateDB (orgName, dt, rqs) = do
   result <- upsert
     org
     (\orgArg -> orgArg ! #orgName .== (fromString $ toString orgName))
-    (\orgArg -> with orgArg [#lastRunOrg := (literal dt)])
+    (\orgArg -> with orgArg [#lastRun := (literal dt)])
     [o]
   case result of
-    Just id -> print "New Org inserted"
-    Nothing -> print $ "Update performed on Org " <> orgName
+    Just id -> liftIO $ CIO.infoMessage "New Org inserted"
+    Nothing -> liftIO $ CIO.infoMessage $ "Update performed on Org " <> orgName
   mapM_ updateDBRepos rqs
   -- return ()
   -- let org = orgRef2
@@ -98,16 +99,16 @@ updateDB (orgName, dt, rqs) = do
 -- Database if it does not already exist before inserting the 'RepoQuery'
 updateDBRepos :: (MonadSelda m, MonadMask m) => RepoQuery -> m ()
 updateDBRepos rq = do
-  let n     = repoQueryName rq
-      o     = orgRef2 rq
-      lr    = lastRun rq
-      ca    = created rq
+  let n     = #repoName rq
+      o     = #orgRef rq
+      lr    = #lastRun rq
+      ca    = #createdAt rq
       repo_ = Repo n o lr ca
   -- insert repo [repo_]
   result <- upsert
     repo
     (\r -> (r ! #repoName .== (literal n)) .&& (r ! #orgRef .== (literal o)))
-    (\r -> with r [#lastRunRepo := (literal lr)])
+    (\r -> with r [#lastRun := (literal lr)])
     [repo_]
   -- case result of
   --   Just id -> print "New Repo inserted"

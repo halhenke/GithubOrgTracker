@@ -142,21 +142,22 @@ parse fetchTime orgName oo = mapper cc
           --  (<| [])
                                             )
   mapper = map
-    (\x -> RepoQuery {
+    (\x -> RepoQuery
+      {
         -- NOTE: This is how you disambiguate a Record Field Witlh OverloadedLabels
         -- (getField @"name" @OrganizationRepositoriesEdgesNodeRepository) x
                                 --  (name x)
-                       repoQueryName = x ^. _name
-                     , orgRef2       = orgName
+        repoName  = x ^. _name
+      , orgRef    = orgName
                     --  , created       = UTCTime (toEnum 4) (fromInteger 4)
-                     , created = (cheapDateReader . getDateTime . createdAt) x
-                     , updated = (cheapDateReader . getDateTime . updatedAt) x
+      , createdAt = (cheapDateReader . getDateTime . #createdAt) x
+      , updatedAt = (cheapDateReader . getDateTime . #updatedAt) x
       -- , updated       = (getDateTime . updatedAt) x
-                     , lastRun       = fetchTime
-                     , stars         = (#totalCount . stargazers) x
-                     , languages     = fromMaybe "" (langParser x)
-                     , topics        = fromMaybe "" (topicParser x)
-                     }
+      , lastRun   = fetchTime
+      , stars     = (#totalCount . stargazers) x
+      , languages = fromMaybe "" (langParser x)
+      , topics    = fromMaybe "" (topicParser x)
+      }
     )
   langParser = \x -> do
     y <- GQL.languages x

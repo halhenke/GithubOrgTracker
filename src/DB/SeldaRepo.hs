@@ -1,4 +1,5 @@
-{-# LANGUAGE DeriveGeneric, NoImplicitPrelude, OverloadedStrings, OverloadedLabels #-}
+{-# LANGUAGE DeriveGeneric, NoImplicitPrelude, OverloadedStrings #-}
+{-# LANGUAGE DuplicateRecordFields, OverloadedLabels #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE Strict #-}
 
@@ -18,7 +19,7 @@ import           Defaults
 -- | The Org Data Type is used for Org Rcords
 data Org = Org {
     orgName :: Text,
-    lastRunOrg :: UTCTime
+    lastRun :: UTCTime
 } deriving Generic
 instance SqlRow Org
 
@@ -27,7 +28,7 @@ instance SqlRow Org
 data Repo = Repo {
     repoName :: Text,
     orgRef :: Text,
-    lastRunRepo :: UTCTime,
+    lastRun :: UTCTime,
     createdAt :: UTCTime
 } deriving Generic
 instance SqlRow Repo
@@ -35,13 +36,13 @@ instance SqlRow Repo
 -- | The RepoQuery Data Type is used to represent the result of Github Queries
 -- about a particular 'Repo'.
 data RepoQuery = RepoQuery {
-    repoQueryName :: Text,
-    orgRef2 :: Text,
+    repoName :: Text,
+    orgRef :: Text,
     stars :: Int,
     languages :: Text,
     topics :: Text,
-    created :: UTCTime,
-    updated :: UTCTime,
+    createdAt :: UTCTime,
+    updatedAt :: UTCTime,
     lastRun :: UTCTime
 } deriving (Generic, Show, Eq)
 instance SqlRow RepoQuery
@@ -58,15 +59,14 @@ repo = table "repo" [#repoName :+ #orgRef :- primary]
 -- repoQuery :: Table RepoQuery
 -- repoQuery = table
 --   "repoQuery"
---   [ #repoQueryName :+ #lastRun :- primary
---   , #repoQueryName :- foreignKey repo #repoName
+--   [ #repoName :+ #lastRun :- primary
+--   , #repoName :- foreignKey repo #repoName
 --   ]
 repoQuery :: Table RepoQuery
-repoQuery =
-  table "repoQuery" [#repoQueryName :+ #orgRef2 :+ #lastRun :- primary]
-  -- , #orgRef2 :- foreignKey org #orgName
-  -- , #repoQueryName :- foreignKey repo #repoName
-  -- , #orgRef2 :- foreignKey repo #orgRef
+repoQuery = table "repoQuery" [#repoName :+ #orgRef :+ #lastRun :- primary]
+  -- , #orgRef :- foreignKey org #orgName
+  -- , #repoName :- foreignKey repo #repoName
+  -- , #orgRef :- foreignKey repo #orgRef
   -- ]
 
 r2 :: Table Repo
@@ -77,9 +77,9 @@ r2 = table
 rq2 :: Table RepoQuery
 rq2 = table
   "repoQuery"
-  [ #repoQueryName :+ #orgRef2 :+ #lastRun :- primary
-  , #orgRef2 :- foreignKey org #orgName
-  , #repoQueryName :- foreignKey repo #repoName
+  [ #repoName :+ #orgRef :+ #lastRun :- primary
+  , #orgRef :- foreignKey org #orgName
+  , #repoName :- foreignKey repo #repoName
   ]
 
 setUpDB :: (MonadSelda m) => m ()
