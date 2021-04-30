@@ -61,6 +61,7 @@ ghAPI = https "api.github.com" /: "graphql"
 ghToken = "***REMOVED***"
 
 
+-- | resolver is a Function needed by the Morpheus Library to query the API
 resolver :: String -> ByteString -> IO ByteString
 resolver tok b = runReq defaultHttpConfig $ do
   let headers =
@@ -72,16 +73,20 @@ resolver tok b = runReq defaultHttpConfig $ do
   (responseBody <$> req POST ghAPI (ReqBodyLbs b) lbsResponse headers)
 
 
-fetchRepo :: Text -> IO (Either String GetRepo)
-fetchRepo orgName = fetch (resolver "fake") args
+-- | fetchOrg runs the query defined in 'GraphQL.Query' and returns the Results
+fetchOrg :: Text -> IO (Either String GetRepo)
+fetchOrg orgName = fetch (resolver "fake") args
   where args = GetRepoArgs { org = (toString orgName) }
 
 
+-- | runOrg gets the query results for a given 'Org' and then returns
+-- the results as a Tuple of the Organization Name,
+-- the Time the Query was run and a list of 'RepoQuery'
 runOrg :: Text -> IO (Either String (Text, UTCTime, [RepoQuery]))
 runOrg orgName = do
---   (Right repo) <- fetchRepo
+--   (Right repo) <- fetchOrg
   print $ "Fetching Repos for Org " <> orgName <> "..."
-  result <- fetchRepo orgName
+  result <- fetchOrg orgName
   dt     <- getCurrentTime
   -- print result
   -- print $ "we just ran this for " <> orgName
@@ -125,6 +130,9 @@ instance HasField x r a => IsLabel x (r -> a) where
 -- parse :: OrganizationOrganization -> [OrganizationRepositoriesEdgesNodeRepository]
 -- parse :: OrganizationOrganization -> [Text]
 -- parse :: OrganizationOrganization -> [(Text, Text, Text, Int)]
+
+-- | parse takes the results of a Github Query and Parses them into a list of
+-- 'RepoQuery's that can be inserted into the Database
 parse :: UTCTime -> Text -> OrganizationOrganization -> [RepoQuery]
 -- parse :: Text -> OrganizationOrganization -> [Result]
 -- parse :: OrganizationOrganization -> [Result]

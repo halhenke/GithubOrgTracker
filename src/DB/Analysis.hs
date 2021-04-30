@@ -81,16 +81,18 @@ newReposForOrg orgName = do
 -- count_updates
 
 -- repos_per_org
--- reposPerOrg :: Text -> IO ()
-reposPerOrg = do
-  let q = aggregate $ do
-        r <- select repo
-        g <- groupBy (r ! #orgRef)
-        return (g :*: count (r))
-  withSQLite github_org_db $ do
-    result <- query q
-    print result
-    return ()
+-- -- reposPerOrg :: Text -> IO ()
+-- reposPerOrg = do
+--   let q = aggregate $ do
+--         r <- select repo
+--         g <- groupBy (r ! #orgRef)
+--         return (g :*: count (r))
+--   withSQLite github_org_db $ do
+--     result <- query q
+--     print result
+--     return ()
+
+
 
 -- -- Find the number of people living on every address, for all addresses
 -- -- with more than one tenant:

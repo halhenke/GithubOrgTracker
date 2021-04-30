@@ -124,6 +124,7 @@ parseTable "repoQuery" = RepoQueryTable
 -- proxyTable "repoQuery" = repoQuery
 
 
+-- | delete a list of 'Table's
 destroyTables :: [Text] -> IO ()
 destroyTables tableNames = withSQLite github_org_db $ do
   -- parseTable <$> tableNames

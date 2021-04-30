@@ -23,6 +23,7 @@
 
 module DB.UpdateDB
   ( runOrgs
+  , runOrgsSeq
   )
 where
 
@@ -56,6 +57,9 @@ import           Database.Selda.SQLite
 
 -- | Take a List of 'Org's, query the Github API to get the info on
 -- Repositories, and insert it into the SQLite Database
+-- NOTE: tis currently runs all Orgs as Queries and only then
+-- passes that list of Repos to the Database for storage - I think
+-- it should put each `Org` in the Database at a time?
 runOrgs :: [Text] -> IO ()
 runOrgs orgs = do
   let parsedOrgs = toLower <$> orgs
@@ -68,6 +72,24 @@ runOrgs orgs = do
   -- bracket
   -- updateDB results
   return ()
+
+-- | Exactly like 'runOrgs', but it fetches an 'Org' from Github and
+-- then inserts its 'Repo's into the Database instead of doing all the Github queries
+-- for every 'Org' first and then inserting them all into the Database at once.
+runOrgsSeq :: [Text] -> IO ()
+runOrgsSeq orgs = do
+  let parsedOrgs = toLower <$> orgs
+  mapM_ runAnOrg parsedOrgs
+  -- let processOrg =
+  --       runOrg >>= \(Right x) -> (withSQLite github_org_db $ (updateDB x))
+  -- for parsedOrgs
+  -- return ()
+
+runAnOrg :: Text -> IO ()
+runAnOrg org = do
+  (Right repos) <- runOrg org
+  withSQLite github_org_db $ updateDB repos
+  -- return ()
 
 -- updateDB :: MonadSelda m => (Text, UTCTime, [RepoQuery]) -> m ()
 -- updateDB :: MonadSelda m => Text -> UTCTime -> [RepoQuery]) -> m ()

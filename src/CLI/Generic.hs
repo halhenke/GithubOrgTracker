@@ -74,8 +74,8 @@ data Command =
 instance ParseRecord Command
 
 parseCommand :: Command -> IO ()
-parseCommand (Update orgs)     = runOrgs orgs
-parseCommand UpdateAll         = runOrgs defaultOrgs
+parseCommand (Update orgs)     = runOrgsSeq orgs
+parseCommand UpdateAll         = runOrgsSeq defaultOrgs
 parseCommand (Query org)       = A.newReposForOrg org
 parseCommand MakeTables        = DBS.makeTables
 parseCommand Migrate           = DBS.migrateFix
@@ -83,6 +83,7 @@ parseCommand DestroyAll        = DBS.destroyTables allTableNams
 parseCommand (Destroy tables)  = DBS.destroyTables tables
 parseCommand DescribeAllTables = DBS.describeTables allTableNams
 
+-- | This parses Command Line Arguments and runs the appropriate Command
 genericPrompt :: IO ()
 genericPrompt = do
   x <- getRecord @IO @Command "Test Example"
