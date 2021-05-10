@@ -21,7 +21,7 @@ maintainer:         halhenke@gmail.com
 -- category:
 extra-source-files: CHANGELOG.md
 data-files:
-    src/GraphQL/github.gql
+    src/GraphQL/schema.gql
 custom-setup
   setup-depends: Cabal, base, liquidhaskell
 
