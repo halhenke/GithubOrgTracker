@@ -88,6 +88,8 @@ defaultOrgs =
   , "JuliaMath"
   , "JuliaData"
   , "queryverse"
+  , "kowainik"
+  , "tweag"
   , "FluxML"
   ]
 
