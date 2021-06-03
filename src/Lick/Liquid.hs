@@ -51,7 +51,7 @@ import           GHC.TypeLits
 
 {-@ type VectorN a N = {v:Vector a | vlen v == N} @-}
 
-{-@ twoLangs :: VectorN String 2 @-}
+{-@ twoLangs :: VectorN _ 2 @-}
 twoLangs = fromList ["haskell", "javascript"]
 
 {-@ type Btwn Lo Hi = {v:Int | Lo <= v && v < Hi} @-}

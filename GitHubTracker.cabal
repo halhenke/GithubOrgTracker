@@ -53,7 +53,7 @@ library
     -- other-extensions:
     --     NoImplicitPrelude
     build-depends:
-        -- base,
+        base,
         bytestring,
         colourista,
         relude,
@@ -68,6 +68,7 @@ library
         relude,
         lens,
         liquid-base,
+        liquid-ghc-prim,
         liquidhaskell >= 0.8.10,
         morpheus-graphql-client,
         morpheus-graphql-core,
@@ -90,6 +91,7 @@ library
     mixins:
             -- base hiding (Prelude)
             -- , liquid-base hiding (Prelude)
+            liquid-base (Data.Foldable as DFoldable),
             -- , relude (Relude as Prelude)
             -- , relude
     ghc-options: -fplugin=LiquidHaskell
