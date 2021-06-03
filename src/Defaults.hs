@@ -107,6 +107,7 @@ defaultOrgs =
   , "kowainik"
   , "tweag"
   , "FluxML"
+  , "uber-research"
   ]
 
 defaultOrg :: String

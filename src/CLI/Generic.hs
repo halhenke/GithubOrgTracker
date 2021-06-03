@@ -29,6 +29,7 @@ import           Options.Generic               as OG
 import           DB.UpdateDB                   as UDB
 import           DB.Analysis                   as A
 import           DB.SeldaRepo                  as DBS
+import           Colourista                    as C
 import           Defaults
 
 -- data Repo = Repo {
@@ -69,6 +70,7 @@ data Command =
     | Destroy [Text]
     -- | CheckALLTables
     | DescribeAllTables
+    | ListOrgs
     deriving (Show, Eq, Generic)
 
 instance ParseRecord Command
@@ -82,6 +84,12 @@ parseCommand Migrate           = DBS.migrateFix
 parseCommand DestroyAll        = DBS.destroyTables allTableNams
 parseCommand (Destroy tables)  = DBS.destroyTables tables
 parseCommand DescribeAllTables = DBS.describeTables allTableNams
+parseCommand ListOrgs          = do
+  C.formattedMessage [C.blue] " ------"
+  C.formattedMessage [C.blue] "| Orgs |"
+  C.formattedMessage [C.blue] " ------"
+  let orgPrint = C.formattedMessage [C.green]
+  mapM_ orgPrint defaultOrgs
 
 -- | This parses Command Line Arguments and runs the appropriate Command
 genericPrompt :: IO ()
