@@ -14,7 +14,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 
-module DB.Persistent where
+module DB.Persistent.Persistent where
 
 
 import           Control.Monad.IO.Class         ( liftIO )

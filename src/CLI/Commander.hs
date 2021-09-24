@@ -35,10 +35,6 @@ commandPrompt =
     $   (optDef @"m" @"mode" "Hooo" $ \mode -> raw (print $ (mode :: String)))
     <+> (sub @"update" $ raw (print "Hey"))
     <+> (sub @"query" $ raw (print "Ney")) where
-    -- <+> (sub @"query" $ raw (print "Ney")) where
-    --     defaultProgram =
-    --         annotated @"This is the Default Program"
-    --         raw $ (print "Ho")
 
 
 example :: IO ()

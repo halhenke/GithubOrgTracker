@@ -25,10 +25,6 @@ module MyLib
 where
 
 
--- import           Control.Monad.IO.Class         ( liftIO )
--- import           Database.Persist
--- import           Database.Persist.Sqlite
--- import           Database.Persist.TH
 import           Relude
 import           Data.Time.Clock
 import           Database.Selda                 ( (.==)

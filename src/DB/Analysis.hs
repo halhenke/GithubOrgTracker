@@ -63,7 +63,7 @@ newReposForOrg orgName = do
           order (rq ! #lastRun) descending
           return (rq ! #repoName)
         )
-  withSQLite github_org_db $ do
+  withSQLite githubOrgDb $ do
     rqn <- query q
     print rqn
     return ()
@@ -87,7 +87,7 @@ newReposForOrg orgName = do
 --         r <- select repo
 --         g <- groupBy (r ! #orgRef)
 --         return (g :*: count (r))
---   withSQLite github_org_db $ do
+--   withSQLite githubOrgDb $ do
 --     result <- query q
 --     print result
 --     return ()

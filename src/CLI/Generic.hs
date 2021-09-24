@@ -68,7 +68,6 @@ data Command =
     | Migrate
     | DestroyAll
     | Destroy [Text]
-    -- | CheckALLTables
     | DescribeAllTables
     | ListOrgs
     deriving (Show, Eq, Generic)

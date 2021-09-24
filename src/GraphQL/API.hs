@@ -45,6 +45,7 @@ import           GraphQL.Query                 as GQL
 -- import           GHC.IsLabel
 import           DB.SeldaRepo                  as DBS
                                                 ( RepoQuery(..) )
+import System.Environment                     as SE (lookupEnv)
 import           GHC.Records
 
 data Result = Result {
@@ -58,19 +59,18 @@ data Result = Result {
 
 
 ghAPI = https "api.github.com" /: "graphql"
-ghToken = "***REMOVED***"
 
 
 -- | resolver is a Function needed by the Morpheus Library to query the API
 resolver :: String -> ByteString -> IO ByteString
-resolver tok b = runReq defaultHttpConfig $ do
-  let headers =
-        header "Content-Type" "application/json"
-          <> header "User-Agent" "halhenke"
-          <> oAuth2Token ghToken
-        --   <> header "Authorization"
-        --             "Bearer ***REMOVED***"
-  (responseBody <$> req POST ghAPI (ReqBodyLbs b) lbsResponse headers)
+resolver tok b = do 
+  (Just ghToken) <- SE.lookupEnv "GITHUB_API_TOKEN"
+  runReq defaultHttpConfig $ do
+    let headers =
+          header "Content-Type" "application/json"
+            <> header "User-Agent" "halhenke"
+            <> oAuth2Token (fromString ghToken)
+    responseBody <$> req POST ghAPI (ReqBodyLbs b) lbsResponse headers
 
 
 -- | fetchOrg runs the query defined in 'GraphQL.Query' and returns the Results
@@ -88,21 +88,12 @@ runOrg orgName = do
   print $ "Fetching Repos for Org " <> orgName <> "..."
   result <- fetchOrg orgName
   dt     <- getCurrentTime
-  -- print result
-  -- print $ "we just ran this for " <> orgName
   return
     (do
       results <- result
       repos   <- decodeResponse results
       return (orgName, dt, (parse dt orgName repos))
     )
---   repos  <- case result of
---     (Left err) -> print err
---     -- (Right repo) -> print (decodeResponse repo)
---     (Right (decodeResponse -> Right org)) -> print (parse dt orgName org)
---     otherwise -> print "Seems like some deep Parsing Failed"
--- --   print repo
---   return ()
 
 
 
@@ -119,24 +110,10 @@ cheapDateReader dt = fromMaybe defaultDate (iso8601ParseM (toString dt))
 instance HasField x r a => IsLabel x (r -> a) where
   fromLabel = getField @x
 
--- instance IsLabel "name" (OrganizationRepositoriesEdgesNodeRepository -> Text) where
---   fromLabel = name @OrganizationRepositoriesEdgesNodeRepository
---     OrganizationRepositoriesEdgesNodeRepository
-
--- instance HasField "name" OrganizationRepositoriesEdgesNodeRepository a => IsLabel "name" (OrganizationRepositoriesEdgesNodeRepository -> a) where
---   fromLabel = getField
-
--- parse :: OrganizationOrganization -> [OrganizationRepositoriesEdgesRepositoryEdge]
--- parse :: OrganizationOrganization -> [OrganizationRepositoriesEdgesNodeRepository]
--- parse :: OrganizationOrganization -> [Text]
--- parse :: OrganizationOrganization -> [(Text, Text, Text, Int)]
 
 -- | parse takes the results of a Github Query and Parses them into a list of
 -- 'RepoQuery's that can be inserted into the Database
 parse :: UTCTime -> Text -> OrganizationOrganization -> [RepoQuery]
--- parse :: Text -> OrganizationOrganization -> [Result]
--- parse :: OrganizationOrganization -> [Result]
--- parse oo = mapper cc -- & b
 parse fetchTime orgName oo = mapper cc
  where
   cc =
@@ -144,11 +121,7 @@ parse fetchTime orgName oo = mapper cc
       ^. _repositories
       ^. _edges
       &  (^?! _Just)
-      &  ((^.. each . _Just . _node . _Just
-            -- . (_name <> (_updatedAt . (to getDateTime)))
-                                           )
-          --  (<| [])
-                                            )
+      &  ((^.. each . _Just . _node . _Just))
   mapper = map
     (\x -> RepoQuery
       {
@@ -157,10 +130,8 @@ parse fetchTime orgName oo = mapper cc
                                 --  (name x)
         repoName  = x ^. _name
       , orgRef    = orgName
-                    --  , created       = UTCTime (toEnum 4) (fromInteger 4)
       , createdAt = (cheapDateReader . getDateTime . #createdAt) x
       , updatedAt = (cheapDateReader . getDateTime . #updatedAt) x
-      -- , updated       = (getDateTime . updatedAt) x
       , lastRun   = fetchTime
       , stars     = (#totalCount . stargazers) x
       , languages = fromMaybe "" (langParser x)
@@ -181,45 +152,3 @@ parse fetchTime orgName oo = mapper cc
     let yyy = #name . #topic <$> (catMaybes $ #node <$> yy)
     let y5 = toText $ intercalate ", " (toString <$> yyy)
     return y5
-    -- yy :: [Maybe OrganizationRepositoriesEdgesNodeLanguagesEdgesLanguageEdge] <-
-    -- yy <-
-    --   getField @"node"
-    --     @OrganizationRepositoriesEdgesNodeLanguagesLanguageConnection
-    --     y
-    -- let yyy = catMaybes yy
-    -- return "april"
-    -- yyy  <- #edges yy
-    -- yyyy <- #node yyy
-    -- yyyy
-  -- langer = (to (fromMaybe @Text "None"))
-  -- mapper = map
-  --   (\x -> Result {
-  --       -- NOTE: This is how you disambiguate a Record Field Witlh OverloadedLabels
-  --       -- (getField @"name" @OrganizationRepositoriesEdgesNodeRepository) x
-  --                               --  (name x)
-  --                   _repoName  = x ^. _name
-  --                 , _updatedAt = (getDateTime . updatedAt) x
-  --                 , _createdAt = (getDateTime . createdAt) x
-  --                 , _stars     = (#totalCount . stargazers) x
-  --                 , _languages = []
-  --                 , _topics    = []
-  --                 }
-  --   )
-  -- mapper = map
-  --   (\x ->
-  --     ( x ^. _name
-  --     , (getDateTime . updatedAt) x
-  --     , (getDateTime . createdAt) x
-  --     , (totalCount . stargazers) x
-  --     )
-  --   )
-  -- a  = _aaa b
-  -- b = (^. _node) d
-  -- b  = (^.. each . _node) & d
-  -- d  = (^.. each . _Just) -- & e
-  -- d = (^?! _Just) (^. _name)
-  -- e  = (^.. each . _name)
-
-  -- b  = (^.. _name)
--- ^. _1 ^
--- parseOrg :: OrganizationOrganization ->

@@ -4,17 +4,13 @@
 module Main where
 
 import           Relude
--- import qualified MyLib                          ( someFunc )
 import           MyLib                         as GHT
+import Control.Monad (void)
+import Configuration.Dotenv
 
 main :: IO ()
 main = do
-  -- GHT.mkDB
-  -- GHT.runOrgs ["Google"]
-  -- GHT.newReposForOrg "Google"
-  -- GHT.commandPrompt
+  void $ loadFile defaultConfig
   GHT.genericPrompt
+  -- GHT.commandPrompt
   -- GHT.turtlePrompt
--- main = do
---   putStrLn "Hello, Haskell!"
---   MyLib.someFunc

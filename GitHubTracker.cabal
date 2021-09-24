@@ -23,19 +23,19 @@ extra-source-files: CHANGELOG.md
 data-files:
     src/GraphQL/schema.gql
 custom-setup
-  setup-depends: Cabal, base, liquidhaskell
+  setup-depends: Cabal, base
+--   setup-depends: Cabal, base, liquidhaskell
 
 common common-options
     ghc-options:       -fwrite-ide-info
                        -hiedir=.hie
-                       -fplugin=LiquidHaskell
+                    --    -fplugin=LiquidHaskell
 library
     import: common-options
     exposed-modules:
         MyLib,
         DB.Selda,
         DB.SeldaRepo
-        -- DB.Persistent
     -- Modules included in this library but not exported.
     other-modules:
         CLI.Commander
@@ -46,7 +46,6 @@ library
         GraphQL.API
         GraphQL.HelperTH
         GraphQL.Query
-        Lick.Liquid
         DB.UpdateDB
         DB.Analysis
     -- LANGUAGE extensions used by modules in this package.
@@ -60,24 +59,17 @@ library
         exceptions,
         commander-cli,
         wizards,
-        -- microlens,
-        -- microlens-th,
         persistent,
         persistent-sqlite,
-        -- persistent-template,
         relude,
         lens,
-        liquid-base,
-        liquid-ghc-prim,
-        liquidhaskell >= 0.8.10,
+        dotenv,
         morpheus-graphql-client,
         morpheus-graphql-core,
         morpheus-graphql,
         optparse-generic,
         template-haskell,
         time,
-        -- vector,
-        liquid-vector,
         file-embed,
         req,
         selda,
@@ -89,12 +81,12 @@ library
         NoImplicitPrelude
         OverloadedStrings
     mixins:
-            -- base hiding (Prelude)
+            base hiding (Prelude)
             -- , liquid-base hiding (Prelude)
-            liquid-base (Data.Foldable as DFoldable),
-            -- , relude (Relude as Prelude)
-            -- , relude
-    ghc-options: -fplugin=LiquidHaskell
+            -- liquid-base (Data.Foldable as DFoldable),
+            , relude (Relude as Prelude)
+            , relude
+    -- ghc-options: -fplugin=LiquidHaskell
 
 executable GitHubTracker
     import:         common-options
@@ -106,9 +98,8 @@ executable GitHubTracker
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
     build-depends:
-        -- base,
-        liquid-base,
-        liquidhaskell >= 0.8.10,
+        base,
+        dotenv,
         relude,
         GitHubTracker
 
@@ -117,6 +108,5 @@ executable GitHubTracker
     default-extensions:
         NoImplicitPrelude
         OverloadedStrings
-    ghc-options: -fplugin=LiquidHaskell
 
 
